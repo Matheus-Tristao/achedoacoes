@@ -14,6 +14,22 @@ import {
   reviewInput,
 } from "./validators.js";
 export const app = express();
+
+app.use((req, res, next) => {
+  const matchedPath = req.headers["x-matched-path"] || req.headers["x-invoke-path"];
+  if (typeof matchedPath === "string" && matchedPath.startsWith("/api")) {
+    const queryIdx = req.url.indexOf("?");
+    const query = queryIdx !== -1 ? req.url.slice(queryIdx) : "";
+    req.url = matchedPath + query;
+  } else if (!req.url.startsWith("/api")) {
+    req.url = "/api" + (req.url.startsWith("/") ? req.url : "/" + req.url);
+  }
+  next();
+});
+
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true, env: process.env.NODE_ENV || "development" });
+});
 const origins = [
   process.env.APP_ORIGIN || "http://localhost:5173",
   process.env.VERCEL_PROJECT_PRODUCTION_URL
