@@ -19,7 +19,23 @@ const origins = [
   process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : "",
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "",
 ].filter(Boolean);
+
+function isAllowedOrigin(origin?: string, host?: string): boolean {
+  if (!origin) return true;
+  if (origins.includes(origin)) return true;
+  try {
+    const originUrl = new URL(origin);
+    if (host && (originUrl.host === host || originUrl.hostname === host.split(":")[0])) {
+      return true;
+    }
+    if (originUrl.hostname.endsWith(".vercel.app")) {
+      return true;
+    }
+  } catch {}
+  return false;
+}
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -82,7 +98,7 @@ app.use(
       res.locals.session = session;
     }
     if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
-      if (req.headers.origin && !origins.includes(req.headers.origin))
+      if (req.headers.origin && !isAllowedOrigin(req.headers.origin, req.headers.host))
         fail(403, "Origem não permitida");
       if (res.locals.user && req.headers["x-csrf-token"] !== session?.csrf)
         fail(403, "Token de segurança inválido. Atualize a página.");
@@ -152,7 +168,7 @@ async function newSession(res: Response, u: any) {
   res.cookie("sid", token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" || !!process.env.VERCEL,
     maxAge: 7 * 86400000,
     path: "/",
   });

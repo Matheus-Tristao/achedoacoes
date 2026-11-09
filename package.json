@@ -6,14 +6,15 @@
     "backend"
   ],
   "engines": {
-    "node": ">=22.12"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "setup": "node scripts/setup.mjs && npm run db:migrate && npm run db:seed",
     "dev": "node scripts/dev.mjs",
     "db:migrate": "npm run db:migrate -w backend",
     "db:seed": "npm run db:seed -w backend",
-    "build": "npm run build --workspaces",
+    "postinstall": "npm run -w backend postinstall",
+    "build": "npm run build -w backend && npm run build -w frontend",
     "test": "npm test -w backend",
     "start": "npm start -w backend"
   },
