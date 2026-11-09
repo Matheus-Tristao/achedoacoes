@@ -8,5 +8,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["src", "prisma", "tests"]
+  "include": ["src"],
+  "exclude": ["tests", "prisma", "dist", "node_modules"]
 }
