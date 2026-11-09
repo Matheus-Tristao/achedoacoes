@@ -819,10 +819,12 @@ app.patch(
 app.use("/api", (req, res) =>
   res.status(404).json({ error: "Rota não encontrada" }),
 );
-app.use(express.static(resolve(process.cwd(), "../frontend/dist")));
-app.get("*", (req, res) =>
-  res.sendFile(resolve(process.cwd(), "../frontend/dist/index.html")),
-);
+if (!process.env.VERCEL) {
+  app.use(express.static(resolve(process.cwd(), "../frontend/dist")));
+  app.get("*", (req, res) =>
+    res.sendFile(resolve(process.cwd(), "../frontend/dist/index.html")),
+  );
+}
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   if (err instanceof ZodError) {
     res
@@ -843,13 +845,13 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
         : err.code === "P2003"
           ? 400
           : 500);
-  if (code === 500) console.error(err);
+  console.error("[Backend Error]", err);
   res
     .status(code)
     .json({
       error:
         code === 500
-          ? "Erro interno. Tente novamente."
+          ? (err.message || "Erro interno. Tente novamente.")
           : err.code === "P2002"
             ? "Registro já existe (e-mail ou avaliação duplicada)."
             : err.code
